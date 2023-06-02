@@ -491,7 +491,7 @@ end
 --- 应用运行入口
 function app:run(tms)
 
-	self._log:debug("start:")
+-- 	self._log:debug("start:")
 	self:refresh_interfaces()
 	self:show_dns()
 

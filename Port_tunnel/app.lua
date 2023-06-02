@@ -3,7 +3,7 @@ local sysinfo = require 'utils.sysinfo'
 local services = require 'utils.services'
 local inifile = require 'inifile'
 local cjson = require 'cjson'
-local restful = require 'restful'
+local restful = require 'http.restful'
 local log = require 'utils.log'
 
 local app = class("FREEIOE_APP_Port_tunnel_CLASS")
@@ -18,14 +18,16 @@ function split(str,reps)
     return resultStrList
 end
 
-local function get_status(url, dev, gateid, name)
+local function get_status(url, dev, gateid, name, conf)
+    local server_addr = conf.server_addr
+	local server_port = tostring(conf.server_port)
 	local _restapi = restful:new(url)
 	local key = gateid .. "_" .. name
 	local status, body = _restapi:get('/api/status')
--- 	log:info("get_status::::", status, body)
+-- 	log:debug("get_status::::server_addr::::server_port", server_addr, server_port)
 	if status and status == 200 then
 		local data = cjson.decode(body)
--- 		log:info("get_status return::::", cjson.encode(data.tcp))
+-- 		log:debug("get_status return::::", cjson.encode(data.tcp))
 		
 		for k,v in ipairs(data.tcp) do
 -- 			local tag = string.sub(v.name,#v.name-6,-4)
@@ -34,8 +36,23 @@ local function get_status(url, dev, gateid, name)
 				-- 	log:info("get_status::",k, cjson.encode(v.name))
 					local remote_addr = v.remote_addr
                     local remote_arry = split(v.remote_addr, ':')
-                    if remote_arry[1] == 'vpn.symid.com' then
-                        remote_addr = '172.30.0.187:'..remote_arry[2]
+                    -- log:debug("::::server_addr::::", server_addr, server_port, remote_addr)
+                    if server_addr == 'vpn.symid.com' then
+                        -- log:debug("0")
+                        if server_port == '65001' then
+                            remote_addr = '192.168.10.11:'..remote_arry[2]
+                        elseif server_port == '65002' then
+                            remote_addr = '192.168.10.12:'..remote_arry[2]
+                        elseif server_port == '65003' then
+                            remote_addr = '192.168.10.10:'..remote_arry[2]
+                        elseif server_port == '65004' then
+                            remote_addr = '192.168.10.13:'..remote_arry[2]
+                        elseif server_port == '65005' then
+                            remote_addr = '192.168.10.14:'..remote_arry[2]
+                        elseif server_port == '65006' then
+                            remote_addr = '192.168.10.15:'..remote_arry[2]
+
+                        end
                     end
                     dev:set_input_prop(name, 'value', remote_addr)
                 end
@@ -62,6 +79,7 @@ local function get_status(url, dev, gateid, name)
 		
 		return true
 	else
+	    log:debug("get_error return::::", cjson.encode(body))
 	    dev:set_input_prop(name, 'value', ' ')
 	end
 	return nil
@@ -484,11 +502,11 @@ function app:set_run_inputs()
 	self._dev:set_input_prop('frpc_visitors', 'value', self._visitors)
 	local id = self._sys:id()
 	for k,v in pairs(self._tcp_maps or {}) do
-		get_status('http://127.0.0.1:7402', self._dev, id, v)		
+		get_status('http://127.0.0.1:7402', self._dev, id, v, self._conf)		
 	end
 	
 	for k,v in pairs(self._udp_maps or {}) do
-		get_status('http://127.0.0.1:7402', self._dev, id, v)		
+		get_status('http://127.0.0.1:7402', self._dev, id, v, self._conf)		
 	end
 end
 
