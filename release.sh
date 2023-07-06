@@ -8,3 +8,4 @@ RELEASE_APP (){
 RELEASE_APP Net_info
 RELEASE_APP S7-200smart
 RELEASE_APP Port_tunnel
+RELEASE_APP toThingsBoard
